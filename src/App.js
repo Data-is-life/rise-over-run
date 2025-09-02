@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { MapContainer, TileLayer, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import polyline from "@mapbox/polyline";
 
 const API_KEY = process.env.REACT_APP_ORS_API_KEY;
 
@@ -40,7 +41,7 @@ const App = () => {
     const routeRes = await fetch(`https://api.openrouteservice.org/v2/directions/foot-walking/geojson`, {
       method: "POST",
       headers: {
-        "Authorization": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -51,24 +52,36 @@ const App = () => {
         ],
       }),
     });
+
     const routeData = await routeRes.json();
     const coords = routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
     setRouteCoords(coords);
     setCenter(coords[0]);
 
+    // Convert coordinates back to [lng, lat] for polyline encoding
+    const encoded = polyline.encode(routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
       method: "POST",
       headers: {
-        "Authorization": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        format_in: "polyline",
+        format_in: "encodedpolyline",
         format_out: "json",
-        geometry: routeData.features[0].geometry,
+        geometry: encoded,
       }),
     });
+
     const elevData = await elevRes.json();
+
+    if (!elevData.geometry) {
+      console.error("Elevation response invalid:", elevData);
+      alert("Couldn't get elevation data.");
+      return;
+    }
+
     const elevations = elevData.geometry.map((point) => point[2]);
     const gain = calculateElevationGain(elevations);
     setElevationGain(gain);
