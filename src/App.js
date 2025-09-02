@@ -58,18 +58,26 @@ const App = () => {
     setCenter(coords[0]);
 
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        format_in: "polyline",
-        format_out: "json",
-        geometry: routeData.features[0].geometry,
-      }),
-    });
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      format_in: "geojson",
+      format_out: "json",
+      geometry: {
+        type: "LineString",
+        coordinates: routeData.features[0].geometry.coordinates
+      }
+    }),
+  });
     const elevData = await elevRes.json();
+    if (!elevData.geometry) {
+    console.error("Elevation response invalid:", elevData);
+    alert("Couldn't get elevation data.");
+    return;
+  }
     const elevations = elevData.geometry.map((point) => point[2]);
     const gain = calculateElevationGain(elevations);
     setElevationGain(gain);
