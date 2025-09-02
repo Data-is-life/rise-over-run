@@ -62,7 +62,9 @@ const App = () => {
     setCenter(coords[0]);
   
     const encoded = polyline.encode(originalCoords.map(([lng, lat]) => [lat, lng]));
-
+    
+    console.log("Encoded polyline:", encoded); // ADD THIS LINE
+    
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
       method: "POST",
       headers: {
@@ -75,8 +77,9 @@ const App = () => {
         geometry: encoded,
       }),
     });
-
+    
     const elevData = await elevRes.json();
+    console.log("Elevation API response:", elevData);
 
     if (!elevData.geometry) {
       console.error("Elevation response invalid:", elevData);
