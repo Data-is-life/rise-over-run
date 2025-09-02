@@ -87,9 +87,20 @@ const App = () => {
       return;
     }
 
-    const elevations = elevData.features[0].geometry.coordinates.map((point) => point[2]);
-    const gain = calculateElevationGain(elevations);
-    setElevationGain(gain);
+    if (
+      elevData &&
+      elevData.features &&
+      elevData.features.length > 0 &&
+      elevData.features[0].geometry &&
+      elevData.features[0].geometry.coordinates
+    ) {
+      const elevations = elevData.features[0].geometry.coordinates.map((point) => point[2]);
+      const gain = calculateElevationGain(elevations);
+      setElevationGain(gain);
+    } else {
+      console.error("Elevation data missing:", elevData);
+      alert("Couldn't get elevation data.");
+    }
   };
 
   return (
