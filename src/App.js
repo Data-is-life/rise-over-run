@@ -41,7 +41,7 @@ const App = () => {
     const routeRes = await fetch(`https://api.openrouteservice.org/v2/directions/foot-walking/geojson`, {
       method: "POST",
       headers: {
-        "Authorization": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -60,7 +60,7 @@ const App = () => {
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
       method: "POST",
       headers: {
-        "Authorization": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
