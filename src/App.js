@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { MapContainer, TileLayer, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import polyline from "@mapbox/polyline";
 
 const API_KEY = process.env.REACT_APP_ORS_API_KEY;
+console.log("Loaded API Key:", API_KEY);
 
 const App = () => {
   const [start, setStart] = useState("");
@@ -52,36 +52,32 @@ const App = () => {
         ],
       }),
     });
-
     const routeData = await routeRes.json();
     const coords = routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
     setRouteCoords(coords);
     setCenter(coords[0]);
 
-    // Convert coordinates back to [lng, lat] for polyline encoding
-    const encoded = polyline.encode(routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]));
-
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        format_in: "encodedpolyline",
-        format_out: "json",
-        geometry: encoded,
-      }),
-    });
-
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      format_in: "geojson",
+      format_out: "json",
+      geometry: {
+        type: "LineString",
+        coordinates: routeData.features[0].geometry.coordinates
+      }
+    }),
+  });
     const elevData = await elevRes.json();
-
     if (!elevData.geometry) {
-      console.error("Elevation response invalid:", elevData);
-      alert("Couldn't get elevation data.");
-      return;
-    }
-
+    console.error("Elevation response invalid:", elevData);
+    alert("Couldn't get elevation data.");
+    return;
+  }
     const elevations = elevData.geometry.map((point) => point[2]);
     const gain = calculateElevationGain(elevations);
     setElevationGain(gain);
