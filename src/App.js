@@ -90,12 +90,11 @@ const App = () => {
 
     if (
       elevData &&
-      elevData.features &&
-      elevData.features.length > 0 &&
-      elevData.features[0].geometry &&
-      elevData.features[0].geometry.coordinates
+      elevData.geometry &&
+      elevData.geometry.coordinates &&
+      elevData.geometry.coordinates.length > 0
     ) {
-      const elevations = elevData.features[0].geometry.coordinates.map((point) => point[2]);
+      const elevations = elevData.geometry.coordinates.map((point) => point[2]);
       const gain = calculateElevationGain(elevations);
       setElevationGain(gain);
     } else {
