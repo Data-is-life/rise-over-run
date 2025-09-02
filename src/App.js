@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 const API_KEY = process.env.REACT_APP_ORS_API_KEY;
+console.log("Loaded API Key:", API_KEY);
 
 const App = () => {
   const [start, setStart] = useState("");
