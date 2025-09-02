@@ -87,7 +87,7 @@ const App = () => {
       return;
     }
 
-    const elevations = elevData.geometry.map((point) => point[2]);
+    const elevations = elevData.features[0].geometry.coordinates.map((point) => point[2]);
     const gain = calculateElevationGain(elevations);
     setElevationGain(gain);
   };
