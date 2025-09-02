@@ -73,7 +73,7 @@ const App = () => {
       },
       body: JSON.stringify({
         format_in: "encodedpolyline",
-        format_out: "json",
+        format_out: "geojson",
         geometry: encoded,
       }),
     });
