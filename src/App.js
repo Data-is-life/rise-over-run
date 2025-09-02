@@ -54,9 +54,6 @@ const App = () => {
     });
 
     const routeData = await routeRes.json();
-    const coords = routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    setRouteCoords(coords);
-    setCenter(coords[0]);
 
     // Convert coordinates back to [lng, lat] for polyline encoding
     const originalCoords = routeData.features[0].geometry.coordinates;
