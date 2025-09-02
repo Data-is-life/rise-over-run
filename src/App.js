@@ -60,6 +60,10 @@ const App = () => {
 
     // Convert coordinates back to [lng, lat] for polyline encoding
     const originalCoords = routeData.features[0].geometry.coordinates;
+    const coords = originalCoords.map(([lng, lat]) => [lat, lng]);
+    setRouteCoords(coords);
+    setCenter(coords[0]);
+  
     const encoded = polyline.encode(originalCoords.map(([lng, lat]) => [lat, lng]));
 
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
