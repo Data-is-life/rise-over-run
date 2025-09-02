@@ -59,7 +59,8 @@ const App = () => {
     setCenter(coords[0]);
 
     // Convert coordinates back to [lng, lat] for polyline encoding
-    const encoded = polyline.encode(routeData.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+    const originalCoords = routeData.features[0].geometry.coordinates;
+    const encoded = polyline.encode(originalCoords.map(([lng, lat]) => [lat, lng]));
 
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
       method: "POST",
