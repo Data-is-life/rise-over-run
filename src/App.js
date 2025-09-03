@@ -94,8 +94,6 @@ const App = () => {
     
     const elevData = await elevRes.json();
 
-    setElevationData(elevationChart);
-
     if (
       elevData &&
       elevData.geometry &&
@@ -111,6 +109,8 @@ const App = () => {
           elevation: coord[2],
       }));
       setElevationData(elevationChart);
+
+      setCenter(coords[0]);
 
       // Optional: comment out or keep the log below if you want to verify elevation data
       // console.log("Elevation gain calculated:", gain);
