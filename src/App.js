@@ -103,14 +103,15 @@ const App = () => {
       elevData.geometry.coordinates.length > 0
     ) {
       const elevations = elevData.geometry.coordinates.map((point) => point[2]);
+      const gain = calculateElevationGain(elevations);
+      setElevationGain(gain);
+
       const elevationChart = elevData.geometry.coordinates.map((coord, i) => ({
           distance: i * 10, // ~10m increments
           elevation: coord[2],
       }));
       setElevationData(elevationChart);
 
-      const gain = calculateElevationGain(elevations);
-      setElevationGain(gain);
       // Optional: comment out or keep the log below if you want to verify elevation data
       // console.log("Elevation gain calculated:", gain);
     } else {
