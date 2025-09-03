@@ -64,7 +64,7 @@ const App = () => {
     const encoded = polyline.encode(originalCoords.map(([lng, lat]) => [lat, lng]));
     
     // console.log("Encoded polyline:", encoded); // ADD THIS LINE
-    console.log("Sending elevation polyline:", encoded);
+    // console.log("Sending elevation polyline:", encoded);
     
     const elevRes = await fetch("https://api.openrouteservice.org/elevation/line", {
       method: "POST",
@@ -80,25 +80,20 @@ const App = () => {
     });
     
     const elevData = await elevRes.json();
-    console.log("Elevation response full:", elevData);
-
-    // if (!elevData.geometry) {
-    //   console.error("Elevation response invalid:", elevData);
-    //   alert("Couldn't get elevation data.");
-    //   return;
-    // }
 
     if (
       elevData &&
       elevData.geometry &&
-      elevData.geometry.coordinates &&
+      Array.isArray(elevData.geometry.coordinates) &&
       elevData.geometry.coordinates.length > 0
     ) {
       const elevations = elevData.geometry.coordinates.map((point) => point[2]);
       const gain = calculateElevationGain(elevations);
       setElevationGain(gain);
+      // Optional: comment out or keep the log below if you want to verify elevation data
+      // console.log("Elevation gain calculated:", gain);
     } else {
-      console.error("Elevation data missing:", elevData);
+      console.error("❌ Elevation data missing or invalid:", elevData);
       alert("Couldn't get elevation data.");
     }
   };
