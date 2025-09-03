@@ -1,7 +1,19 @@
 import React, { useState } from "react";
-import { MapContainer, TileLayer, Polyline } from "react-leaflet";
+import {
+    MapContainer,
+    TileLayer,
+    Polyline
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import polyline from "@mapbox/polyline";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const API_KEY = process.env.REACT_APP_ORS_API_KEY;
 
@@ -9,7 +21,7 @@ const App = () => {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [routeCoords, setRouteCoords] = useState([]);
-  const [elevationGain, setElevationGain] = useState(null);
+  const [elevationData, setElevationData] = useState([]);
   const [center, setCenter] = useState([37.7749, -122.4194]);
   const [routeType, setRouteType] = useState("flat");
 
@@ -80,6 +92,14 @@ const App = () => {
     });
     
     const elevData = await elevRes.json();
+      
+    // Construct elevation chart data
+    const elevationChart = elevData.geometry.coordinates.map((coord, i) => ({
+      distance: i * 10, // approx 10 meters between points
+      elevation: coord[2],
+    }));
+
+    setElevationData(elevationChart);
 
     if (
       elevData &&
@@ -115,6 +135,23 @@ const App = () => {
         </MapContainer>
       </div>
       {elevationGain && <p>Estimated Elevation Gain: {elevationGain}</p>}
+      {elevationGain && elevationData.length > 0 && (
+            <Card className="shadow-md">
+              <CardContent className="p-4">
+                <h2 className="text-lg font-semibold mb-2 text-center text-gray-800 dark:text-white">
+                  Elevation Profile
+                </h2>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={elevationData}>
+                    <XAxis dataKey="distance" unit="m" />
+                    <YAxis dataKey="elevation" unit="m" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="elevation" stroke="#8884d8" dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
     </div>
   );
 };
