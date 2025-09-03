@@ -21,6 +21,7 @@ const App = () => {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [routeCoords, setRouteCoords] = useState([]);
+  const [elevationGain, setElevationGain] = useState(null);
   const [elevationData, setElevationData] = useState([]);
   const [center, setCenter] = useState([37.7749, -122.4194]);
   const [routeType, setRouteType] = useState("flat");
