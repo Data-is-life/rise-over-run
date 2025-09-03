@@ -17,7 +17,7 @@ import {
 import {
     Card,
     CardContent
-} from "@/components/ui/card";
+} from "./components/ui/card";
 
 const API_KEY = process.env.REACT_APP_ORS_API_KEY;
 
