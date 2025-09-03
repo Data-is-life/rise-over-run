@@ -92,12 +92,6 @@ const App = () => {
     });
     
     const elevData = await elevRes.json();
-      
-    // Construct elevation chart data
-    const elevationChart = elevData.geometry.coordinates.map((coord, i) => ({
-      distance: i * 10, // approx 10 meters between points
-      elevation: coord[2],
-    }));
 
     setElevationData(elevationChart);
 
@@ -108,6 +102,12 @@ const App = () => {
       elevData.geometry.coordinates.length > 0
     ) {
       const elevations = elevData.geometry.coordinates.map((point) => point[2]);
+      const elevationChart = elevData.geometry.coordinates.map((coord, i) => ({
+          distance: i * 10, // ~10m increments
+          elevation: coord[2],
+      }));
+      setElevationData(elevationChart);
+
       const gain = calculateElevationGain(elevations);
       setElevationGain(gain);
       // Optional: comment out or keep the log below if you want to verify elevation data
@@ -136,22 +136,22 @@ const App = () => {
       </div>
       {elevationGain && <p>Estimated Elevation Gain: {elevationGain}</p>}
       {elevationGain && elevationData.length > 0 && (
-            <Card className="shadow-md">
-              <CardContent className="p-4">
-                <h2 className="text-lg font-semibold mb-2 text-center text-gray-800 dark:text-white">
-                  Elevation Profile
-                </h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={elevationData}>
-                    <XAxis dataKey="distance" unit="m" />
-                    <YAxis dataKey="elevation" unit="m" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="elevation" stroke="#8884d8" dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="shadow-md">
+            <CardContent className="p-4">
+              <h2 className="text-lg font-semibold mb-2 text-center text-gray-800 dark:text-white">
+                Elevation Profile
+              </h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={elevationData}>
+                  <XAxis dataKey="distance" unit="m" />
+                  <YAxis dataKey="elevation" unit="m" />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="elevation" stroke="#8884d8" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 };
