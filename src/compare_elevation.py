@@ -1,58 +1,81 @@
 import openrouteservice
-import polyline
-import matplotlib.pyplot as plt
 from geopy.geocoders import Nominatim
-from geopy.distance import geodesic
+import polyline
+import time
+import matplotlib.pyplot as plt
 
+
+# Initialize clients
 ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImExOWI5M2FjZTYwNjRjYzI4MTgwZmNmNmFjOWVkZWJlIiwiaCI6Im11cm11cjY0In0="
+geolocator = Nominatim(user_agent="rise-over-run", timeout=10)
 client = openrouteservice.Client(key=ORS_API_KEY)
-geolocator = Nominatim(user_agent="rise-over-run")
 
-# Geocode locations
+
+def geocode_with_retry(address, retries=3, delay=2):
+    for _ in range(retries):
+        try:
+            location = geolocator.geocode(address, timeout=10)
+            if location:
+                return location
+        except Exception as e:
+            print(f"Geocoding error: {e}, retrying...")
+            time.sleep(delay)
+    return None
+
+# Geocode addresses
 start_address = "111 S Jackson St, Seattle, WA 98104"
 end_address = "423 Terry Ave, Seattle, WA 98104"
 
-start_location = geolocator.geocode(start_address)
-end_location = geolocator.geocode(end_address)
+start_location = geocode_with_retry(start_address)
+end_location = geocode_with_retry(end_address)
 
-# Use [lat, lon] format
-coords = [
-    [start_location.latitude, start_location.longitude],
-    [end_location.latitude, end_location.longitude]
-]
+if not start_location or not end_location:
+    print("❌ Failed to geocode one or both addresses.")
+    exit()
 
-# Get directions to extract geometry
-route = client.directions(coords, format='geojson')
-route_coords = route['features'][0]['geometry']['coordinates']
-# Convert to [lat, lon]
-latlon_coords = [[coord[1], coord[0]] for coord in route_coords]
-encoded_polyline = polyline.encode(latlon_coords)
+# Use [lat, lon] format for ORS
+start_coords = [start_location.latitude, start_location.longitude]
+end_coords = [end_location.latitude, end_location.longitude]
+
+# Get route
+try:
+    route = client.directions(
+        coordinates=[start_coords, end_coords],
+        profile='foot-walking',
+        format='geojson'
+    )
+except Exception as e:
+    print(f"❌ Routing failed: {e}")
+    exit()
+
+# Extract coordinates from route
+line_coords = route['features'][0]['geometry']['coordinates']
+# Reformat to [lat, lon] for polyline encoding
+latlon_coords = [[c[1], c[0]] for c in line_coords]
+encoded = polyline.encode(latlon_coords)
 
 # Get elevation
-elevation = client.elevation_line(
-    format_in='encodedpolyline',
-    format_out='geojson',
-    geometry=encoded_polyline
-)
+try:
+    elevation = client.elevation_line(
+        format_in='encodedpolyline',
+        format_out='geojson',
+        geometry=encoded
+    )
+except Exception as e:
+    print(f"❌ Elevation API error: {e}")
+    exit()
 
-# Extract elevation points
-elevation_points = elevation['geometry']['coordinates']
-distances = [0]
-elevations = [elevation_points[0][2]]
+# Plot elevation
+elevation_coords = elevation['geometry']['coordinates']
+distances = list(range(len(elevation_coords)))
+elevations = [pt[2] for pt in elevation_coords]
 
-# Compute cumulative distance
-for i in range(1, len(elevation_points)):
-    prev = (elevation_points[i-1][1], elevation_points[i-1][0])  # (lat, lon)
-    curr = (elevation_points[i][1], elevation_points[i][0])
-    distances.append(distances[-1] + geodesic(prev, curr).meters)
-    elevations.append(elevation_points[i][2])
-
-# Plot elevation profile
 plt.figure(figsize=(10, 4))
-plt.plot(distances, elevations, marker='o')
-plt.title('Elevation Profile')
-plt.xlabel('Distance (meters)')
-plt.ylabel('Elevation (m)')
+plt.plot(distances, elevations, label="Elevation (m)")
+plt.xlabel("Point Index")
+plt.ylabel("Elevation (m)")
+plt.title("Elevation Profile")
 plt.grid(True)
+plt.legend()
 plt.tight_layout()
 plt.show()
