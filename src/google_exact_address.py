@@ -1,98 +1,88 @@
 import googlemaps
-from datetime import datetime
+import polyline
+import time
 import matplotlib.pyplot as plt
-from itertools import combinations
-import os
+import numpy as np
 import config
 
-# Set up your Google Maps API key
+
+# Initialize with your Google Maps API key
 gmaps = googlemaps.Client(key=config.api_key)
 
-# Base addresses
+
 start_address = "301 Pike St, Seattle, WA 98101"
 end_address = "423 Terry Ave, Seattle, WA 98104"
 
-# Define some potential waypoint candidates near the straight line between start and end
-waypoint_candidates = [
-    "Pine St & 7th Ave, Seattle, WA",
-    "Olive Way & 8th Ave, Seattle, WA",
-    "Stewart St & 9th Ave, Seattle, WA",
-    "Union St & Terry Ave, Seattle, WA"
-]
 
-# Build all combinations of 1-2 waypoints
-waypoint_combos = []
-for r in [1, 2]:
-    waypoint_combos.extend(combinations(waypoint_candidates, r))
+# Step 1: Get exact coordinates of start and end
+start_location = gmaps.geocode(start_address)[0]["geometry"]["location"]
+end_location = gmaps.geocode(end_address)[0]["geometry"]["location"]
 
-# Include the no-waypoint direct route as well
-waypoint_combos = [()] + waypoint_combos
 
-routes = []
+# Step 2: Get the main route
+directions = gmaps.directions(
+    origin=start_location,
+    destination=end_location,
+    mode="walking",
+    alternatives=False
+)
 
-# Helper to calculate elevation gain/loss
-def compute_elevation_stats(elevations):
-    gain, loss = 0, 0
-    for i in range(1, len(elevations)):
-        diff = elevations[i] - elevations[i - 1]
-        if diff > 0:
-            gain += diff
-        else:
-            loss -= diff
-    return gain, loss
 
-# Query each route variation
-for waypoints in waypoint_combos:
-    try:
-        directions_result = gmaps.directions(
-            origin=start_address,
-            destination=end_address,
-            mode="walking",
-            waypoints=waypoints,
-            departure_time=datetime.now()
-        )
+route = directions[0]
+points = polyline.decode(route["overview_polyline"]["points"])
 
-        if not directions_result:
-            continue
 
-        # Decode the polyline for the first route
-        steps = directions_result[0]["legs"][0]["steps"]
-        path = []
-        for step in steps:
-            start_loc = step["start_location"]
-            path.append((start_loc["lat"], start_loc["lng"]))
-        end_loc = steps[-1]["end_location"]
-        path.append((end_loc["lat"], end_loc["lng"]))
+# Step 3: Get elevation data in chunks (Google Elevation API limit = 512 samples)
+# path = "|".join(f"{lat},{lng}" for lat, lng in points)
+# Ensure points are lat/lon and >= 2
+path = [(pt["lat"], pt["lng"]) for pt in points]
 
-        # Get elevation data from Google Elevation API
-        elevation_data = gmaps.elevation_along_path(path, samples=100)
-        elevations = [point["elevation"] for point in elevation_data]
+if len(path) < 2:
+    raise ValueError("Need at least 2 points for elevation data.")
 
-        gain, loss = compute_elevation_stats(elevations)
-        distance = directions_result[0]["legs"][0]["distance"]["value"]  # in meters
+samples = min(512, len(path))
 
-        routes.append({
-            "waypoints": waypoints,
-            "elevations": elevations,
-            "gain": gain,
-            "loss": loss,
-            "distance": distance,
-        })
+elevation_data = gmaps.elevation_along_path(path=path, samples=samples)
 
-    except Exception as e:
-        print(f"Failed for waypoints {waypoints}: {e}")
 
-# Rank by elevation gain (least gain preferred)
-routes_sorted = sorted(routes, key=lambda r: (r["gain"], r["distance"]))
+# elevation_data = gmaps.elevation_along_path(path=path, samples=min(512, len(points)))
 
-# Plot elevation profiles for top 3 routes
-plt.figure(figsize=(10, 6))
-for i, route in enumerate(routes_sorted[:3]):
-    plt.plot(route["elevations"], label=f"Route {i+1}: gain={round(route['gain'],1)}m, loss={round(route['loss'],1)}m, dist={round(route['distance']/1000,2)}km")
-plt.title("Top 3 Routes by Elevation Gain")
-plt.xlabel("Sample Points")
+
+elevations = [pt["elevation"] for pt in elevation_data]
+latlngs = [(pt["location"]["lat"], pt["location"]["lng"]) for pt in elevation_data]
+
+
+# Step 4: Compute slope between intersections and identify high-slope segments
+def compute_slope(elevation_profile):
+    slopes = []
+    for i in range(1, len(elevation_profile)):
+        delta_elev = elevation_profile[i] - elevation_profile[i - 1]
+        horizontal_dist = 1 # unit-less, since we don't have actual distance
+        slopes.append(delta_elev / horizontal_dist)
+    return slopes
+
+
+slopes = compute_slope(elevations)
+
+# Step 5: Detect steep segments and intersections
+def detect_intersections(slopes, threshold=0.05):
+    intersection_indices = []
+    for i, slope in enumerate(slopes):
+        if abs(slope) > threshold:
+            intersection_indices.append(i)
+    return intersection_indices
+
+
+intersections = detect_intersections(slopes)
+
+
+# Step 6: Plot elevation and highlight steep slopes
+plt.figure(figsize=(12, 5))
+plt.plot(elevations, label="Elevation")
+plt.scatter(intersections, [elevations[i] for i in intersections], color='red', label="Steep Slopes")
+plt.title("Elevation Profile with Intersections")
+plt.xlabel("Point Index")
 plt.ylabel("Elevation (m)")
 plt.legend()
-plt.grid(True)
 plt.tight_layout()
 plt.show()
