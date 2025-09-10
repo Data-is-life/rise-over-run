@@ -3,3 +3,4 @@ build/
 .env.local
 src/.virtual_documents/Untitled.ipynb
 src/config.py
+src/Untitled.ipynb
