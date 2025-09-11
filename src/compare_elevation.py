@@ -11,6 +11,7 @@ ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImExOWI5M2FjZ
 geolocator = Nominatim(user_agent="rise-over-run", timeout=10)
 client = openrouteservice.Client(key=ORS_API_KEY)
 
+
 def geocode(address):
     location = geolocator.geocode(address, timeout=10)
     if location:
@@ -56,7 +57,7 @@ def plot_elevation(elevation_coords):
         elevations = [pt[2] for pt in elevation_coords if len(pt) == 3]
 
         if elevations:
-            plt.figure(figsize=(10, 4))
+            plt.figure(figsize=(10, 5))
             plt.plot(range(len(elevations)), elevations, label="Route Elevation")
             plt.title("Elevation Profile")
             plt.xlabel("Point Index")
