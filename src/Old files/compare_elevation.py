@@ -5,9 +5,10 @@ import polyline
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import config
 
 # Initialize clients
-ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImExOWI5M2FjZTYwNjRjYzI4MTgwZmNmNmFjOWVkZWJlIiwiaCI6Im11cm11cjY0In0="
+ORS_API_KEY = config.ors_api
 geolocator = Nominatim(user_agent="rise-over-run", timeout=10)
 client = openrouteservice.Client(key=ORS_API_KEY)
 

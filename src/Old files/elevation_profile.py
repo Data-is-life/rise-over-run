@@ -2,10 +2,11 @@ import openrouteservice
 import matplotlib.pyplot as plt
 from geopy.distance import geodesic
 import numpy as np
+import config
 
 
 # ORS API Key
-ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImExOWI5M2FjZTYwNjRjYzI4MTgwZmNmNmFjOWVkZWJlIiwiaCI6Im11cm11cjY0In0="
+ORS_API_KEY = cofig.ors_api
 
 # Create client
 client = openrouteservice.Client(key=ORS_API_KEY)
